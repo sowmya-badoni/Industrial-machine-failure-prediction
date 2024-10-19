@@ -88,6 +88,49 @@ Time between errors.
 Machine load during operation.
 Feature engineering helps extract useful indicators of failure patterns.
 
+```
+# Exploratory Data Analysis (EDA)
+
+# Plot a sample of features (first 10 features)
+num_features_to_plot = 10  # Adjust as needed
+columns_to_plot = data_scaled.columns[:-1][:num_features_to_plot]  # Exclude 'failure'
+
+plt.figure(figsize=(15, 10))
+for i, col in enumerate(columns_to_plot):
+    plt.subplot(5, 2, i + 1)
+    plt.hist(data_scaled[col], bins=20)
+    plt.title(col)
+    plt.xlabel('Value')
+    plt.ylabel('Frequency')
+
+plt.tight_layout()
+plt.show()
+
+# Box plots for selected features
+plt.figure(figsize=(15, 10))
+sns.boxplot(data=data_scaled[columns_to_plot])
+plt.title('Box Plots of Selected Features')
+plt.xticks(rotation=45)
+plt.show()
+
+# Correlation matrix heatmap
+plt.figure(figsize=(12, 8))
+sns.heatmap(data_scaled.corr(), annot=True, cmap='coolwarm')
+plt.title('Correlation Between Features')
+plt.show()
+
+# Count plot of the target variable (failure vs no failure)
+sns.countplot(x='failure', data=data_scaled)
+plt.title('Failure vs Non-Failure Distribution')
+plt.show()
+
+# Model Selection
+
+# Split data into features (X) and target (y)
+X = data_scaled.drop('failure', axis=1)  # Features
+y = data_scaled['failure']  # Target (failure or not)
+```
+
 ### Labeling Data
 Historical machine data is often labeled with failure events. For instance, the machine might have
 experienced a failure on a specific date, and the data leading up to that failure is tagged. This helps in
@@ -100,6 +143,84 @@ Networks) to predict whether a failure will occur.
 Regression models to predict the time remaining until a failure (Remaining Useful Life, RUL).
 Anomaly detection algorithms (e.g., Isolation Forest, Autoencoders) to identify unusual patterns
 in machine behavior that could indicate a potential failure.
+
+```
+# Split into training and testing sets (80% train, 20% test)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Initialize the RandomForestClassifier
+rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
+
+# Train the model
+rf_model.fit(X_train, y_train)
+
+# Predict on the test set
+y_pred = rf_model.predict(X_test)
+
+# Evaluate the model: Confusion matrix and classification report
+print("Confusion Matrix:")
+print(confusion_matrix(y_test, y_pred))
+
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+# Model Evaluation
+
+# Use SMOTE to oversample the minority class (failures)
+smote = SMOTE(random_state=42)
+X_resampled, y_resampled = smote.fit_resample(X, y)
+
+# Split resampled data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, test_size=0.2, random_state=42)
+
+# Train the model on resampled data
+rf_model.fit(X_train, y_train)
+
+# Predict on the test set
+y_pred = rf_model.predict(X_test)
+
+# Evaluate the model: Confusion matrix and classification report
+print("Confusion Matrix:")
+print(confusion_matrix(y_test, y_pred))
+
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+# Cross-Validation for Stability
+
+# Perform cross-validation on the resampled data (using 5 folds)
+cv_scores = cross_val_score(rf_model, X_resampled, y_resampled, cv=5)
+
+print("Cross-Validation Scores:", cv_scores)
+print("Mean Cross-Validation Score:", cv_scores.mean())
+
+# Hyperparameter Tuning
+
+# Define the parameter grid
+param_grid = {
+    'n_estimators': [50, 100, 200],
+    'max_depth': [10, 20, 30, None],
+    'min_samples_split': [2, 5, 10],
+    'min_samples_leaf': [1, 2, 4]
+}
+
+# Initialize GridSearchCV with RandomForest
+grid_search = GridSearchCV(estimator=rf_model, param_grid=param_grid, cv=3, n_jobs=-1, verbose=2)
+
+# Fit GridSearchCV
+grid_search.fit(X_train, y_train)
+
+# Best parameters from Grid Search
+print("Best Parameters:", grid_search.best_params_)
+
+# Evaluate the best model
+best_model = grid_search.best_estimator_
+y_pred_best = best_model.predict(X_test)
+
+# Print classification report of the best model
+print("\nClassification Report for Best Model:")
+print(classification_report(y_test, y_pred_best))
+```
 
 # Prediction
 Once the model is trained, it can be used to make predictions about future machine failures. For
