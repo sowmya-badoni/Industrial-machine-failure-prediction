@@ -18,6 +18,66 @@ Voltage/current
 Operating time
 Error logs
 This data is usually collected in real-time from sensors embedded in machines.
+```
+# Data Preprocessing
+
+import pandas as pd
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report, confusion_matrix
+from imblearn.over_sampling import SMOTE
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import GridSearchCV
+import xgboost as xgb
+
+# Load the dataset
+data = pd.read_csv("C:/Users/admin/OneDrive/Desktop/IBM DATATHON/predictive_maintenance_dataset.csv")
+
+# Check the first few rows
+print(data.head())
+
+# Check for missing values
+print(data.isnull().sum())
+
+# Handling missing values: Drop rows or fill missing data (depending on the data)
+data.dropna(inplace=True)
+
+# Convert the date column to datetime format
+data['date'] = pd.to_datetime(data['date'])
+
+# Extract useful components from the date, such as year, month, and day
+data['year'] = data['date'].dt.year
+data['month'] = data['date'].dt.month
+data['day'] = data['date'].dt.day
+
+# Optionally, drop the original 'date' column if it's no longer needed
+data = data.drop(columns=['date'])
+
+# Check if all columns are numeric
+print(data.dtypes)
+
+# Identify non-numeric columns
+non_numeric_cols = data.select_dtypes(include=['object']).columns
+print("Non-numeric columns:", non_numeric_cols)
+
+# If you want to drop non-numeric columns
+data.drop(columns=non_numeric_cols, inplace=True)
+
+# Drop the target column ('failure') before scaling
+scaler = StandardScaler()
+scaled_data = scaler.fit_transform(data.drop(columns=['failure']))
+
+# Convert scaled data back to DataFrame and re-add the 'failure' column
+data_scaled = pd.DataFrame(scaled_data, columns=data.columns[:-1])
+data_scaled['failure'] = data['failure'].values  # Assuming 'failure' is the target
+
+# Display the cleaned and scaled data
+print(data_scaled.head())
+
+```
 
 # Feature Engineering
 The raw data collected from sensors may need to be pre-processed to extract meaningful features.
