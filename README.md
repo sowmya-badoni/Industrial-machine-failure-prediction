@@ -1,4 +1,4 @@
-# Industriual-machine-failure-prediction
+# Industrial-machine-failure-prediction
 
 Industrial machine failure refers to the breakdown or malfunction of machinery used in industries,
 which can lead to production delays, increased costs, and safety hazards. These failures can result from
